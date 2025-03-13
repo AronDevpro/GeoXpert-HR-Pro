@@ -75,6 +75,9 @@ class _HomeScreenState extends State<HomeScreen> {
 
   Future<void> _clockIn() async {
     try {
+      setState(() {
+        isLoading = true;
+      });
       LocationPermission permission;
       permission = await Geolocator.checkPermission();
       if (permission == LocationPermission.denied) {
@@ -105,11 +108,14 @@ class _HomeScreenState extends State<HomeScreen> {
         var responseData = json.decode(response.body);
         setState(() {
           clockedIn = true;
+          isLoading = false;
           clockInAt = responseData['data']['clockIn']['time'] ?? 'Unknown time';
         });
         print('Clock-in successful at $clockInAt!');
-        print(clockedIn);
       } else {
+        setState(() {
+          isLoading = false;
+        });
         var responseData = json.decode(response.body);
         String message = responseData['message'] ?? 'Failed to clock-in';
         Alert(
@@ -131,6 +137,9 @@ class _HomeScreenState extends State<HomeScreen> {
         print('Failed to clock-in. Status code: ${response.statusCode}');
       }
     } catch (e) {
+      setState(() {
+        isLoading = false;
+      });
       print("Error during clock-in: $e");
       Alert(
         context: context,
@@ -153,6 +162,9 @@ class _HomeScreenState extends State<HomeScreen> {
 
   Future<void> _clockOut() async {
     try {
+      setState(() {
+        isLoading = true;
+      });
       LocationPermission permission;
       permission = await Geolocator.checkPermission();
       if (permission == LocationPermission.denied) {
@@ -184,6 +196,7 @@ class _HomeScreenState extends State<HomeScreen> {
         setState(() {
           clockedIn = false;
           todayHours = responseData['data']['totalHours'];
+          isLoading = false;
         });
         print('Clock-out successful - $todayHours!');
       } else {
@@ -225,6 +238,10 @@ class _HomeScreenState extends State<HomeScreen> {
         ],
         desc: "Something went wrong. Please try again later!",
       ).show();
+    } finally {
+      setState(() {
+        isLoading = false;
+      });
     }
   }
 
@@ -238,7 +255,7 @@ class _HomeScreenState extends State<HomeScreen> {
     } else if (hour >= 17 && hour < 21) {
       return 'Good evening';
     } else {
-      return 'Good night';
+      return 'Hello';
     }
   }
 
@@ -248,7 +265,7 @@ class _HomeScreenState extends State<HomeScreen> {
         isPullLoading = true;
       });
       final response =
-          await apiService.get('attendances/${user?.id}?limit=${limit}');
+          await apiService.get('attendances/${user?.id}?limit=$limit');
       if (response.statusCode == 201) {
         final Map<String, dynamic> jsonData = jsonDecode(response.body);
 
@@ -276,7 +293,6 @@ class _HomeScreenState extends State<HomeScreen> {
     if (isPullLoading) {
       return;
     }
-    ;
     if (_scrollController.position.pixels ==
         _scrollController.position.maxScrollExtent) {
       onRefresh();
@@ -285,8 +301,6 @@ class _HomeScreenState extends State<HomeScreen> {
 
   @override
   Widget build(BuildContext context) {
-    final screenWidth = MediaQuery.of(context).size.width;
-
     return Header(
       hasAppBar: false,
       currentRoute: '/home',
@@ -346,8 +360,7 @@ class _HomeScreenState extends State<HomeScreen> {
                           ],
                         ),
                       ),
-                      const SizedBox(height: 25),
-                      const SizedBox(height: 20),
+                      const SizedBox(height: 80),
                     ],
                   ),
                 ),
@@ -355,170 +368,166 @@ class _HomeScreenState extends State<HomeScreen> {
               Container(
                 alignment: AlignmentDirectional.bottomEnd,
                 height: 210,
+                padding: const EdgeInsets.symmetric(horizontal: 20),
                 child: Row(
                   mainAxisAlignment: MainAxisAlignment.spaceAround,
                   children: [
+                    // Salary Button
                     GestureDetector(
-                      onTap: (){
+                      onTap: () {
                         AutoRouter.of(context).replace(SalaryRoute());
                       },
-                      child: Container(
-                        width: screenWidth / 4,
-                        height: screenWidth / 4,
-                        decoration: const BoxDecoration(
-                          shape: BoxShape.rectangle,
-                          color: GREY3,
-                          borderRadius:
-                              BorderRadiusDirectional.all(Radius.circular(5)),
-                        ),
-                        child: const Center(
-                          child: Text(
-                            "Salary",
-                            style: TextStyle(fontSize: 25),
-                          ),
-                        ),
+                      child: _buildIconContainer(
+                        context,
+                        "Salary",
+                        Icons.monetization_on,
+                        GREY3,
+                      ),
+                    ),
+                    // Leave Button
+                    GestureDetector(
+                      onTap: () {
+                        AutoRouter.of(context).replace(LeaveRoute());
+                      },
+                      child: _buildIconContainer(
+                        context,
+                        "Leave",
+                        Icons.calendar_today,
+                        GREY3,
                       ),
                     ),
                     GestureDetector(
-                      onTap: (){
+                      onTap: () {
                         AutoRouter.of(context).replace(LeaveRoute());
                       },
-                      child: Container(
-                        width: screenWidth / 4,
-                        height: screenWidth / 4,
-                        decoration: const BoxDecoration(
-                          shape: BoxShape.rectangle,
-                          color: GREY3,
-                          borderRadius:
-                              BorderRadiusDirectional.all(Radius.circular(5)),
-                        ),
-                        child: const Center(
-                          child: Text(
-                            "Leave",
-                            style: TextStyle(fontSize: 25),
-                          ),
-                        ),
-                      ),
-                    ),
-                    Container(
-                      width: screenWidth / 4,
-                      height: screenWidth / 4,
-                      decoration: const BoxDecoration(
-                        shape: BoxShape.rectangle,
-                        color: GREY3,
-                        borderRadius:
-                            BorderRadiusDirectional.all(Radius.circular(5)),
-                      ),
-                      child: const Center(
-                        child: Text(
-                          "Leave",
-                          style: TextStyle(fontSize: 25),
-                        ),
+                      child: _buildIconContainer(
+                        context,
+                        "Leave",
+                        Icons.calendar_today,
+                        GREY3,
                       ),
                     ),
                   ],
                 ),
-              ),
+              )
             ],
           ),
           const SizedBox(height: 20),
           Center(
             child: Container(
               width: 300,
-              height: 200,
+              height: 250,
               decoration: BoxDecoration(
-                borderRadius: BorderRadius.all(Radius.circular(8)),
-                border: Border.all(color: GREY3),
-                shape: BoxShape.rectangle,
-              ),
-              child: Column(
-                mainAxisAlignment: MainAxisAlignment.center,
-                children: [
-                  if (!clockedIn) ...[
-                    SizedBox(
-                      child: ElevatedButton(
-                        style: ButtonStyle(
-                          shape:
-                              WidgetStateProperty.all<RoundedRectangleBorder>(
-                            RoundedRectangleBorder(
-                              borderRadius: BorderRadius.circular(5.0),
-                            ),
-                          ),
-                          backgroundColor:
-                              WidgetStateProperty.all<Color>(GREEN),
-                          padding: WidgetStateProperty.all(
-                            const EdgeInsets.symmetric(
-                                horizontal: 75, vertical: 25),
-                          ),
-                        ),
-                        onPressed: _clockIn,
-                        child: const Text(
-                          'Clock In',
-                          style: TextStyle(
-                            color: WHITE,
-                            fontSize: 20,
-                            fontWeight: FontWeight.w600,
-                          ),
-                        ),
-                      ),
-                    ),
-                    const SizedBox(height: 5),
-                    const Text(
-                      'Not Clocked in yet',
-                      style: TextStyle(color: GREY, fontSize: 12),
-                    ),
-                  ] else ...[
-                    const Icon(
-                      Icons.access_time,
-                      color: RED,
-                      size: 40,
-                    ),
-                    const SizedBox(height: 5),
-                    Text(
-                      clockInAt,
-                      style: const TextStyle(
-                        color: BLACK,
-                        fontSize: 20,
-                        fontWeight: FontWeight.w700,
-                      ),
-                    ),
-                    const SizedBox(height: 5),
-                    SizedBox(
-                      child: ElevatedButton(
-                        style: ButtonStyle(
-                          shape:
-                              WidgetStateProperty.all<RoundedRectangleBorder>(
-                            RoundedRectangleBorder(
-                              borderRadius: BorderRadius.circular(5.0),
-                            ),
-                          ),
-                          backgroundColor:
-                              WidgetStateProperty.all<Color>(RED),
-                          padding: WidgetStateProperty.all(
-                            const EdgeInsets.symmetric(
-                                horizontal: 75, vertical: 25),
-                          ),
-                        ),
-                        onPressed: _clockOut,
-                        child: const Text(
-                          'Clock Out',
-                          style: TextStyle(
-                            color: WHITE,
-                            fontSize: 20,
-                            fontWeight: FontWeight.w600,
-                          ),
-                        ),
-                      ),
-                    ),
-                  ],
+                borderRadius: BorderRadius.circular(15),
+                gradient: const LinearGradient(
+                  colors: [Color(0xFFE1F5FE), Color(0xFFBBDEFB)],
+                  begin: Alignment.topLeft,
+                  end: Alignment.bottomRight,
+                ),
+                boxShadow: [
+                  BoxShadow(
+                    color: Colors.grey.withOpacity(0.3),
+                    spreadRadius: 3,
+                    blurRadius: 5,
+                    offset: const Offset(0, 3),
+                  ),
                 ],
               ),
+              child: isLoading
+                  ? const Center(
+                      child: CircularProgressIndicator(
+                        color: Colors.indigoAccent,
+                      ),
+                    )
+                  : Column(
+                      mainAxisAlignment: MainAxisAlignment.center,
+                      children: [
+                        if (!clockedIn) ...[
+                          // Clock In Button
+                          ElevatedButton(
+                            style: ButtonStyle(
+                              shape: WidgetStatePropertyAll<
+                                  RoundedRectangleBorder>(
+                                RoundedRectangleBorder(
+                                  borderRadius: BorderRadius.circular(
+                                      12), // More rounded corners for the button
+                                ),
+                              ),
+                              backgroundColor:
+                                  const WidgetStatePropertyAll<Color>(
+                                      Color(0xFF66BB6A)), // Green color
+                              padding: const WidgetStatePropertyAll(
+                                EdgeInsets.symmetric(
+                                    horizontal: 75, vertical: 18),
+                              ),
+                            ),
+                            onPressed: _clockIn,
+                            child: const Text(
+                              'Clock In',
+                              style: TextStyle(
+                                color: Colors.white,
+                                fontSize: 20,
+                                fontWeight: FontWeight.w600,
+                              ),
+                            ),
+                          ),
+                          const SizedBox(height: 10),
+                          const Text(
+                            'Not Clocked in yet',
+                            style: TextStyle(color: Colors.grey, fontSize: 14),
+                          ),
+                        ] else ...[
+                          // Clocked In State
+                          const Icon(
+                            Icons.access_time,
+                            color: Colors.redAccent,
+                            size: 50,
+                          ),
+                          const SizedBox(height: 10),
+                          Text(
+                            clockInAt,
+                            style: const TextStyle(
+                              color: Colors.black,
+                              fontSize: 22,
+                              fontWeight: FontWeight.bold,
+                            ),
+                          ),
+                          const SizedBox(height: 10),
+                          ElevatedButton(
+                            style: ButtonStyle(
+                              shape: WidgetStatePropertyAll<
+                                  RoundedRectangleBorder>(
+                                RoundedRectangleBorder(
+                                  borderRadius: BorderRadius.circular(
+                                      12), // Rounded corners
+                                ),
+                              ),
+                              backgroundColor: const WidgetStatePropertyAll(
+                                  Colors.redAccent),
+                              padding: const WidgetStatePropertyAll(
+                                EdgeInsets.symmetric(
+                                    horizontal: 75, vertical: 18),
+                              ),
+                            ),
+                            onPressed: _clockOut,
+                            child: const Text(
+                              'Clock Out',
+                              style: TextStyle(
+                                color: Colors.white,
+                                fontSize: 20,
+                                fontWeight: FontWeight.w600,
+                              ),
+                            ),
+                          ),
+                        ],
+                      ],
+                    ),
             ),
           ),
           const SizedBox(height: 25),
           Expanded(
             child: ListView.builder(
-              padding: const EdgeInsets.all(5),
+              padding: const EdgeInsets.all(10),
               controller: _scrollController,
               itemCount: isPullLoading
                   ? (attendanceList?.length ?? 0) + 1
@@ -526,40 +535,124 @@ class _HomeScreenState extends State<HomeScreen> {
               itemBuilder: (context, index) {
                 if (attendanceList == null || attendanceList!.isEmpty) {
                   return const Center(
-                      child: Text('No attendance data available.'));
+                      child: Text(
+                    'No attendance data available.',
+                    style: TextStyle(color: Colors.grey, fontSize: 16),
+                  ));
                 }
 
                 if (index < attendanceList!.length) {
                   final attendance = attendanceList![index];
-                  print(attendance);
-
                   return Card(
-                    color: Colors.blue,
+                    elevation: 5,
+                    shape: RoundedRectangleBorder(
+                      borderRadius: BorderRadius.circular(15),
+                    ),
+                    color: const Color(0xfff5f5f6),
+                    margin: const EdgeInsets.symmetric(vertical: 5),
                     child: ListTile(
-                      leading: const Icon(Icons.circle),
-                      contentPadding:
-                          const EdgeInsets.symmetric(horizontal: 10),
-                      title:
-                          Text(attendance.createdAt.toString().split(' ')[0]),
-                      subtitle: Text(
-                        attendance.totalHours != null
-                            ? '${attendance.totalHours} hours'
-                            : '',
+                      leading: const CircleAvatar(
+                        backgroundColor: Colors.indigoAccent,
+                        child: Icon(
+                          Icons.check,
+                          color: Colors.white,
+                          size: 20,
+                        ),
                       ),
-                      trailing: Text(attendance.status),
+                      contentPadding: const EdgeInsets.symmetric(
+                          horizontal: 15, vertical: 10),
+                      title: Text(
+                        attendance.createdAt.toString().split(' ')[0],
+                        style: const TextStyle(
+                          color: Colors.indigoAccent,
+                          fontSize: 16,
+                          fontWeight: FontWeight.bold,
+                        ),
+                      ),
+                      subtitle: attendance.totalHours != null
+                          ? Text(
+                              '${attendance.totalHours} hours',
+                              style: TextStyle(
+                                fontSize: 14,
+                                color: Colors.grey[700],
+                              ),
+                            )
+                          : null,
+                      trailing: Text(
+                        attendance.status,
+                        style: TextStyle(
+                          color: attendance.status == "Normal"
+                              ? Colors.green
+                              : Colors.redAccent,
+                          fontSize: 14,
+                          fontWeight: FontWeight.w600,
+                        ),
+                      ),
                     ),
                   );
                 } else {
-                  return const Center(
-                    child: CircularProgressIndicator(
-                      color: Colors.blue,
+                  // Loading indicator
+                  return const Padding(
+                    padding: EdgeInsets.symmetric(vertical: 10),
+                    child: Center(
+                      child: CircularProgressIndicator(
+                        color: Colors.blueAccent,
+                        strokeWidth: 3,
+                      ),
                     ),
                   );
                 }
               },
             ),
+          )
+        ],
+      ),
+    );
+  }
+
+  Widget _buildIconContainer(
+      BuildContext context, String label, IconData iconData, Color color) {
+    double screenWidth = MediaQuery.of(context).size.width;
+
+    return Container(
+      width: screenWidth / 4,
+      height: screenWidth / 4,
+      decoration: BoxDecoration(
+        gradient: LinearGradient(
+          colors: [color.withOpacity(0.8), color],
+          begin: Alignment.topLeft,
+          end: Alignment.bottomRight,
+        ),
+        shape: BoxShape.rectangle,
+        borderRadius: BorderRadius.circular(15),
+        boxShadow: [
+          BoxShadow(
+            color: Colors.black.withOpacity(0.1),
+            blurRadius: 8,
+            offset: const Offset(0, 4),
           ),
         ],
+      ),
+      child: Center(
+        child: Column(
+          mainAxisAlignment: MainAxisAlignment.center,
+          children: [
+            Icon(
+              iconData,
+              color: Colors.white,
+              size: 35,
+            ),
+            const SizedBox(height: 8),
+            Text(
+              label,
+              style: const TextStyle(
+                fontSize: 18,
+                color: Colors.white,
+                fontWeight: FontWeight.bold,
+              ),
+            ),
+          ],
+        ),
       ),
     );
   }

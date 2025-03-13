@@ -11,7 +11,7 @@ import '../../services/token_storage.dart';
 
 @RoutePage()
 class SalaryScreen extends StatefulWidget {
-  SalaryScreen({super.key});
+  const SalaryScreen({super.key});
 
   @override
   State<SalaryScreen> createState() => _SalaryScreenState();
@@ -49,7 +49,7 @@ class _SalaryScreenState extends State<SalaryScreen> {
         isPullLoading = true;
       });
       final response =
-          await apiService.get('payrolls/${user?.id}?limit=${limit}');
+          await apiService.get('payrolls/${user?.id}?limit=$limit');
       if (response.statusCode == 201) {
         final Map<String, dynamic> jsonData = jsonDecode(response.body);
 
@@ -77,7 +77,6 @@ class _SalaryScreenState extends State<SalaryScreen> {
     if (isPullLoading) {
       return;
     }
-    ;
     if (_scrollController.position.pixels ==
         _scrollController.position.maxScrollExtent) {
       onRefresh();
@@ -110,38 +109,79 @@ class _SalaryScreenState extends State<SalaryScreen> {
           children: [
             Expanded(
               child: ListView.builder(
-                padding: const EdgeInsets.all(5),
+                padding: const EdgeInsets.all(15),
                 controller: _scrollController,
                 itemCount: isPullLoading
                     ? (salaryList?.length ?? 0) + 1
                     : (salaryList?.length ?? 0),
                 itemBuilder: (context, index) {
                   if (salaryList == null || salaryList!.isEmpty) {
-                    return const Center(child: Text('No Salary data available.'));
+                    return const Center(
+                        child: Text(
+                      'No Salary data available.',
+                      style: TextStyle(color: Colors.grey, fontSize: 16),
+                    ));
                   }
 
                   if (index < salaryList!.length) {
                     final salary = salaryList![index];
                     return Card(
-                      color: Colors.blue,
+                      shape: RoundedRectangleBorder(
+                        borderRadius: BorderRadius.circular(15),
+                      ),
+                      margin: const EdgeInsets.symmetric(vertical: 8),
+                      elevation: 5,
+                      // Adding elevation for card shadow
+                      color: Colors.blue.shade50,
                       child: ListTile(
-                        leading: const Icon(Icons.circle),
-                        contentPadding: const EdgeInsets.symmetric(horizontal: 10),
-                        title: Text(salary.period),
-                        subtitle: Text(salary.netSalary.toString()),
-                        trailing: Text(salary.status),
+                        contentPadding: const EdgeInsets.symmetric(
+                            horizontal: 20, vertical: 12),
+                        leading: Icon(
+                          Icons.attach_money,
+                          color: Colors.blue.shade800,
+                          size: 30,
+                        ),
+                        title: Text(
+                          salary.period,
+                          style: TextStyle(
+                            fontSize: 18,
+                            fontWeight: FontWeight.bold,
+                            color: Colors.blue.shade900,
+                          ),
+                        ),
+                        subtitle: Text(
+                          '\$${salary.netSalary.toStringAsFixed(2)}',
+                          style: TextStyle(
+                            fontSize: 16,
+                            color: Colors.blue.shade600,
+                          ),
+                        ),
+                        trailing: Text(
+                          salary.status,
+                          style: TextStyle(
+                            fontSize: 16,
+                            fontWeight: FontWeight.w600,
+                            color: salary.status == 'Paid'
+                                ? Colors.green
+                                : Colors.red,
+                          ),
+                        ),
                       ),
                     );
                   } else {
                     return const Center(
-                      child: CircularProgressIndicator(
-                        color: Colors.blue,
+                      child: Padding(
+                        padding: EdgeInsets.all(20.0),
+                        child: CircularProgressIndicator(
+                          color: Colors.blue,
+                          strokeWidth: 3,
+                        ),
                       ),
                     );
                   }
                 },
               ),
-            ),
+            )
           ],
         ),
       ),
