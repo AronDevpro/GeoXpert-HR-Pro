@@ -2,9 +2,11 @@ import 'package:auto_route/auto_route.dart';
 import 'package:flutter/material.dart';
 import 'package:geoxpert_hr_pro/src/common_widget/login_screen/background_and_card.dart';
 import 'package:geoxpert_hr_pro/src/constants/colors.dart';
+import 'package:geoxpert_hr_pro/src/services/api_service.dart';
 import 'package:geoxpert_hr_pro/src/services/app_routes.gr.dart';
 import 'package:geoxpert_hr_pro/src/services/auth_service.dart';
 import 'package:provider/provider.dart';
+import 'package:rflutter_alert/rflutter_alert.dart';
 import '../../model/User.dart';
 import '../../providers/auth_notifier.dart';
 import '../../services/token_storage.dart';
@@ -21,6 +23,7 @@ class _LoginScreenState extends State<LoginScreen> {
   bool _obscurePassword = true;
   final _authService = AuthService();
   final TokenStorage tk = TokenStorage();
+  final ApiService api = ApiService();
   User? user;
 
   final TextEditingController _emailController = TextEditingController();
@@ -71,9 +74,22 @@ class _LoginScreenState extends State<LoginScreen> {
     if (isSuccess) {
       AutoRouter.of(context).replace(const HomeRoute());
     } else {
-      ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text('Login Failed')),
-      );
+      Alert(
+        context: context,
+        type: AlertType.error,
+        title: "Login Failed",
+        buttons: [
+          DialogButton(
+            onPressed: () => Navigator.pop(context),
+            width: 120,
+            child: const Text(
+              "Ok",
+              style: TextStyle(color: Colors.white, fontSize: 20),
+            ),
+          )
+        ],
+        desc: "Please try again!",
+      ).show();
     }
   }
 

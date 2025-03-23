@@ -10,6 +10,7 @@ class AppRouter extends RootStackRouter {
     AutoRoute(page: HomeRoute.page, path: '/home',guards: [AuthGuard()] ),
     AutoRoute(page: SalaryRoute.page, path: '/salary',guards: [AuthGuard()] ),
     AutoRoute(page: LeaveRoute.page, path: '/leave',guards: [AuthGuard()] ),
+    AutoRoute(page: HelpRoute.page, path: '/help',guards: [AuthGuard()] ),
     AutoRoute(page: LoginRoute.page, path: '/',initial: true, keepHistory: false),
   ];
 }

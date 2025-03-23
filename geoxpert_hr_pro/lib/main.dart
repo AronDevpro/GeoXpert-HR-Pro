@@ -26,16 +26,8 @@ class MyApp extends StatelessWidget {
     return MaterialApp.router(
       theme: ThemeData(fontFamily: 'Monda'),
       debugShowCheckedModeBanner: false,
-      title: 'SHRMS - Attendance',
+      title: 'GeoXpert HR Pro',
       routerConfig: _appRouter.config(),
-      // initialRoute: '/',
-      // routes: {
-      //   '/': (context) => const LoginScreen(),
-      //   '/forget-password': (context) => const ForgetPasswordScreen(),
-      //   '/verify-otp': (context) => const VerifyOtp(),
-      //   '/change-password': (context) => const ChangePasswordScreen(),
-      //   '/home': (context) => HomeScreen(),
-      // },
     );
   }
 }

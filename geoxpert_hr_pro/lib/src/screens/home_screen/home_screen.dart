@@ -398,12 +398,12 @@ class _HomeScreenState extends State<HomeScreen> {
                     ),
                     GestureDetector(
                       onTap: () {
-                        AutoRouter.of(context).replace(LeaveRoute());
+                        AutoRouter.of(context).replace(HelpRoute());
                       },
                       child: _buildIconContainer(
                         context,
-                        "Leave",
-                        Icons.calendar_today,
+                        "Help",
+                        Icons.help,
                         GREY3,
                       ),
                     ),

@@ -1,12 +1,21 @@
+import 'dart:convert';
+import 'dart:io';
+
 import 'package:auto_route/auto_route.dart';
 import 'package:flutter/material.dart';
+import 'package:geoxpert_hr_pro/src/services/api_service.dart';
 import 'package:geoxpert_hr_pro/src/services/app_routes.gr.dart';
+import 'package:image_picker/image_picker.dart';
 import 'package:provider/provider.dart';
+import 'package:rflutter_alert/rflutter_alert.dart';
 import '../constants/colors.dart';
 import '../model/User.dart';
 import '../providers/auth_notifier.dart';
 import '../services/auth_service.dart';
 import '../services/token_storage.dart';
+import 'package:http/http.dart' as http;
+
+import 'login_screen/editable_profile_image.dart';
 
 class Header extends StatefulWidget {
   final Widget child;
@@ -28,8 +37,13 @@ class _HeaderState extends State<Header> {
   bool hasAppBar = true;
   final _authService = AuthService();
   final TokenStorage tk = TokenStorage();
+  final ApiService api = ApiService();
   User? user;
   bool isLoading = false;
+  File? _profileImage;
+
+  // Image picker setup
+  final ImagePicker _picker = ImagePicker();
 
   Future<void> _fetchUser() async {
     try {
@@ -43,6 +57,102 @@ class _HeaderState extends State<Header> {
       setState(() {
         isLoading = false;
       });
+    }
+  }
+
+  // Handle Image Picking
+  Future<void> _pickImage() async {
+    final pickedFile = await _picker.pickImage(source: ImageSource.gallery);
+    if (pickedFile != null) {
+      setState(() {
+        _profileImage = File(pickedFile.path);
+      });
+      await _uploadImageToCloudinary(_profileImage!);
+    }
+  }
+
+  // Handle Image Upload to Cloudinary
+  Future<void> _uploadImageToCloudinary(File imageFile) async {
+    try {
+      final uri =
+          Uri.parse('https://api.cloudinary.com/v1_1/dhugpjgpm/image/upload');
+      final request = http.MultipartRequest('POST', uri);
+      request.fields['upload_preset'] = 'flutter';
+      request.files
+          .add(await http.MultipartFile.fromPath('file', imageFile.path));
+
+      final response = await request.send();
+      final responseData = await http.Response.fromStream(response);
+
+      if (response.statusCode == 200) {
+        final data = json.decode(responseData.body);
+        String imageUrl = data['secure_url'];
+
+        setState(() {
+          user?.photo = imageUrl;
+        });
+
+        final Map<String, dynamic> payload = {
+          'photo': imageUrl,
+        };
+        print(imageUrl);
+
+        final response = await api.put('employees/${user?.id}', payload);
+        if (response.statusCode != 200) {
+          Alert(
+            context: context,
+            type: AlertType.error,
+            title: 'Failed to upload image',
+            desc: 'Please try again',
+            buttons: [
+              DialogButton(
+                onPressed: () => Navigator.pop(context),
+                width: 120,
+                child: const Text(
+                  "Ok",
+                  style: TextStyle(color: Colors.white, fontSize: 20),
+                ),
+              )
+            ],
+          ).show();
+        }
+      } else {
+        print('Failed to upload image');
+        Alert(
+          context: context,
+          type: AlertType.error,
+          title: 'Failed to upload image',
+          desc: 'Please try again',
+          buttons: [
+            DialogButton(
+              onPressed: () => Navigator.pop(context),
+              width: 120,
+              child: const Text(
+                "Ok",
+                style: TextStyle(color: Colors.white, fontSize: 20),
+              ),
+            )
+          ],
+        ).show();
+      }
+    } catch (e) {
+      print('Error uploading image: $e');
+      Alert(
+        context: context,
+        type: AlertType.error,
+        title: 'Error uploading image',
+        desc: 'Please try again',
+        buttons: [
+          DialogButton(
+            onPressed: () => Navigator.pop(context),
+            width: 120,
+            child: const Text(
+              "Ok",
+              style: TextStyle(color: Colors.white, fontSize: 20),
+            ),
+          )
+        ],
+      ).show();
     }
   }
 
@@ -140,12 +250,11 @@ class _HeaderState extends State<Header> {
                   Row(
                     mainAxisAlignment: MainAxisAlignment.spaceAround,
                     children: [
-                      const ClipOval(
-                          child: Icon(
-                        Icons.person,
-                        color: WHITE,
-                        size: 40,
-                      )),
+                      EditableProfileImage(
+                        photoUrl: user?.photo,
+                        localImage: _profileImage,
+                        onEdit: _pickImage,
+                      ),
                       SizedBox(
                         height: 30,
                         child: ElevatedButton(
@@ -192,8 +301,6 @@ class _HeaderState extends State<Header> {
             ),
             _buildDrawerItem(context, 'HOME', Icons.home, '/home'),
             _buildDrawerItem(
-                context, 'ATTENDANCE HISTORY', Icons.timer, '/attendance'),
-            _buildDrawerItem(
                 context, 'SALARY HISTORY', Icons.monetization_on, '/salary'),
             _buildDrawerItem(
                 context, 'APPLY LEAVE', Icons.calendar_today, '/leave'),
@@ -234,58 +341,17 @@ class _HeaderState extends State<Header> {
 
                   if (route == '/home') {
                     AutoRouter.of(context).replace(const HomeRoute());
-                  } else if (route == '/attendance') {
+                    // } else if (route == '/attendance') {
                     // AutoRouter.of(context).replace(AttendanceRoute());
                   } else if (route == '/salary') {
-                    AutoRouter.of(context).replace(SalaryRoute());
+                    AutoRouter.of(context).replace(const SalaryRoute());
                   } else if (route == '/leave') {
-                    AutoRouter.of(context).replace(LeaveRoute());
+                    AutoRouter.of(context).replace(const LeaveRoute());
                   } else if (route == '/help') {
-                    // AutoRouter.of(context).replace(HelpRoute());
+                    AutoRouter.of(context).replace(HelpRoute());
                   }
                 }
               : null,
-        ),
-      ),
-    );
-  }
-
-  Widget _buildDrawerSubItem(
-      BuildContext context, String title, String assetPath, String? route) {
-    return Padding(
-      padding: const EdgeInsets.symmetric(horizontal: 40.0, vertical: 10),
-      child: Align(
-        alignment: Alignment.centerRight,
-        child: Container(
-          width: 160,
-          decoration: BoxDecoration(
-            border: Border.all(
-              color: selectedTile == route ? PRIMARY : WHITE.withOpacity(0.6),
-              width: 1,
-            ),
-            borderRadius: BorderRadius.circular(5),
-            color: SECONDARY.withOpacity(0.6),
-          ),
-          child: ListTile(
-            leading: const Icon(
-              Icons.history,
-              size: 25,
-              color: BLUE2,
-            ),
-            //leading: Image.asset(assetPath, width: 20, color: BLUE2),
-            title: Text(title,
-                style: const TextStyle(
-                    color: WHITE, fontSize: 11, fontWeight: FontWeight.w700)),
-            onTap: route != null
-                ? () {
-                    setState(() {
-                      selectedTile = route;
-                    });
-                    Navigator.pop(context);
-                    Navigator.pushNamed(context, route);
-                  }
-                : null,
-          ),
         ),
       ),
     );

@@ -102,7 +102,7 @@ class _SalaryScreenState extends State<SalaryScreen> {
   @override
   Widget build(BuildContext context) {
     return Header(
-      currentRoute: 'salary',
+      currentRoute: 'Salary',
       hasAppBar: true,
       child: SafeArea(
         child: Column(

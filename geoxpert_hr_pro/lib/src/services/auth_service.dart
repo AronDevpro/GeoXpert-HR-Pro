@@ -10,13 +10,15 @@ import 'package:http/http.dart' as http;
 class AuthService {
   final TokenStorage _tokenStorage = TokenStorage();
 
-  Future<bool> login(String email, String password,AuthNotifier authNotifier) async {
+  Future<bool> login(
+      String email, String password, AuthNotifier authNotifier) async {
     try {
       String? id = await OneSignal.User.getOnesignalId();
       final response = await http.post(
         Uri.parse('${ApiUrl.baseUrl}auth'),
         headers: {'Content-Type': 'application/json'},
-        body: jsonEncode({'email': email, 'password': password, 'appToken':id}),
+        body:
+            jsonEncode({'email': email, 'password': password, 'appToken': id}),
       );
       print(response.body);
       if (response.statusCode == 201) {
@@ -24,19 +26,20 @@ class AuthService {
         Map<String, dynamic> userData = JwtDecoder.decode(data['accessToken']);
 
         User user = User(
-          id: userData['id'],
-          name: userData['name'],
-          email: userData['email'],
-          branch: userData['branch']['branchName'],
-          branchId: userData['branch']['_id'],
-          role: userData['role'],
-          startTime: userData['contract']['officeShift']['startTime'],
-          endTime: userData['contract']['officeShift']['endTime'],
-          longitude: userData['branch']['longitude'],
-          latitude: userData['branch']['latitude'],
-          radius: userData['branch']['radius'],
-        );
-        await _tokenStorage.saveTokens(data['accessToken'], data['refreshToken'], user);
+            id: userData['id'],
+            name: userData['name'],
+            email: userData['email'],
+            branch: userData['branch']['branchName'],
+            branchId: userData['branch']['_id'],
+            role: userData['role'],
+            startTime: userData['contract']['officeShift']['startTime'],
+            endTime: userData['contract']['officeShift']['endTime'],
+            longitude: userData['branch']['longitude'],
+            latitude: userData['branch']['latitude'],
+            radius: userData['branch']['radius'],
+            photo: userData['photo']);
+        await _tokenStorage.saveTokens(
+            data['accessToken'], data['refreshToken'], user);
         authNotifier.setLoggedIn(true);
         return true;
       }
@@ -69,19 +72,20 @@ class AuthService {
         Map<String, dynamic> userData = JwtDecoder.decode(data['accessToken']);
 
         User user = User(
-          id: userData['id'],
-          name: userData['name'],
-          email: userData['email'],
-          branch: userData['branch']['branchName'],
-          branchId: userData['branch']['_id'],
-          role: userData['role'],
-          startTime: userData['contract']['officeShift']['startTime'],
-          endTime: userData['contract']['officeShift']['endTime'],
-          longitude: userData['branch']['longitude'],
-          latitude: userData['branch']['latitude'],
-          radius: userData['branch']['radius'],
-        );
-        await _tokenStorage.saveTokens(data['accessToken'],data['refreshToken'], user);
+            id: userData['id'],
+            name: userData['name'],
+            email: userData['email'],
+            branch: userData['branch']['branchName'],
+            branchId: userData['branch']['_id'],
+            role: userData['role'],
+            startTime: userData['contract']['officeShift']['startTime'],
+            endTime: userData['contract']['officeShift']['endTime'],
+            longitude: userData['branch']['longitude'],
+            latitude: userData['branch']['latitude'],
+            radius: userData['branch']['radius'],
+            photo: userData['photo']);
+        await _tokenStorage.saveTokens(
+            data['accessToken'], data['refreshToken'], user);
         return data['accessToken'];
       }
       return null;

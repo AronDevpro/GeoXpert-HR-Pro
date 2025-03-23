@@ -6,7 +6,10 @@ import '../main_image_with_logo.dart';
 class BackgroundAndCard extends StatelessWidget {
   final Widget child;
 
-  const BackgroundAndCard({super.key, required this.child});
+  const BackgroundAndCard({
+    super.key,
+    required this.child,
+  });
 
   @override
   Widget build(BuildContext context) {
