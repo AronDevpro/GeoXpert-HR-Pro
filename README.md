@@ -11,7 +11,7 @@ The frontend is built using Flutter. Follow these steps to set it up:
 Navigate to the Flutter project directory:
 
 ```bash
-cd frontend
+cd GeoXpert-HR-Pro/geoxpert_hr_pro
 ```
 Install the required Flutter dependencies:
 
