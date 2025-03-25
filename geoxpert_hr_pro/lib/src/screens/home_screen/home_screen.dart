@@ -29,7 +29,6 @@ class _HomeScreenState extends State<HomeScreen> {
   bool isLoading = false;
   String clockInAt = "";
   bool clockedIn = false;
-  double todayHours = 0;
   List<AttendanceList>? attendanceList;
   int limit = 10;
   final ScrollController _scrollController = ScrollController();
@@ -40,6 +39,7 @@ class _HomeScreenState extends State<HomeScreen> {
     super.initState();
     _fetchUser();
     _scrollController.addListener(_scrollListener);
+    _checkClockInStatus();
   }
 
   Future<void> _fetchUser() async {
@@ -50,6 +50,7 @@ class _HomeScreenState extends State<HomeScreen> {
         isLoading = false;
       });
       getAttendance();
+      _checkClockInStatus();
     } catch (e) {
       print("Error fetching user: $e");
       setState(() {
@@ -70,6 +71,24 @@ class _HomeScreenState extends State<HomeScreen> {
         limit = limit + 5;
         getAttendance();
       });
+    }
+  }
+
+  Future<void> _checkClockInStatus() async {
+    try {
+      final response = await apiService.get('attendances/today/${user?.id}');
+      if (response.statusCode == 201) {
+        final Map<String, dynamic> jsonData = jsonDecode(response.body);
+        final todayAttendance = jsonData;
+        if (todayAttendance['clockOut'] == null && todayAttendance['status'] != "Leave") {
+          setState(() {
+            clockedIn = true;
+            clockInAt = todayAttendance['clockIn']['time'] ?? '';
+          });
+        }
+      }
+    } catch (e) {
+      print("Error checking clock in status: $e");
     }
   }
 
@@ -192,13 +211,12 @@ class _HomeScreenState extends State<HomeScreen> {
           await apiService.put('attendances/${user?.id}', attendanceData);
 
       if (response.statusCode == 200) {
-        var responseData = json.decode(response.body);
         setState(() {
           clockedIn = false;
-          todayHours = responseData['data']['totalHours'];
           isLoading = false;
         });
-        print('Clock-out successful - $todayHours!');
+        getAttendance();
+        print('Clock-out successful');
       } else {
         var responseData = json.decode(response.body);
         String message = responseData['message'] ?? 'Failed to clock-out';
@@ -375,7 +393,7 @@ class _HomeScreenState extends State<HomeScreen> {
                     // Salary Button
                     GestureDetector(
                       onTap: () {
-                        AutoRouter.of(context).replace(SalaryRoute());
+                        AutoRouter.of(context).push(const SalaryRoute());
                       },
                       child: _buildIconContainer(
                         context,
@@ -387,7 +405,7 @@ class _HomeScreenState extends State<HomeScreen> {
                     // Leave Button
                     GestureDetector(
                       onTap: () {
-                        AutoRouter.of(context).replace(LeaveRoute());
+                        AutoRouter.of(context).push(const LeaveRoute());
                       },
                       child: _buildIconContainer(
                         context,
@@ -398,7 +416,7 @@ class _HomeScreenState extends State<HomeScreen> {
                     ),
                     GestureDetector(
                       onTap: () {
-                        AutoRouter.of(context).replace(HelpRoute());
+                        AutoRouter.of(context).push(HelpRoute());
                       },
                       child: _buildIconContainer(
                         context,

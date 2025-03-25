@@ -24,6 +24,7 @@ class _LoginScreenState extends State<LoginScreen> {
   final _authService = AuthService();
   final TokenStorage tk = TokenStorage();
   final ApiService api = ApiService();
+  bool loading = false;
   User? user;
 
   final TextEditingController _emailController = TextEditingController();
@@ -32,8 +33,8 @@ class _LoginScreenState extends State<LoginScreen> {
   @override
   void initState() {
     super.initState();
-    _emailController.text = "ideatidy@gmail.com";
-    _passwordController.text = "password123";
+    _emailController.text = "";
+    _passwordController.text = "";
     WidgetsBinding.instance.addPostFrameCallback((_) {
       _checkAuth();
     });
@@ -67,13 +68,22 @@ class _LoginScreenState extends State<LoginScreen> {
   }
 
   void _fetchLogin(BuildContext context) async {
+    setState(() {
+      loading = true;
+    });
     final authNotifier = Provider.of<AuthNotifier>(context, listen: false);
     final isSuccess = await _authService.login(
         _emailController.text, _passwordController.text, authNotifier);
 
     if (isSuccess) {
       AutoRouter.of(context).replace(const HomeRoute());
+      setState(() {
+        loading = false;
+      });
     } else {
+      setState(() {
+        loading = false;
+      });
       Alert(
         context: context,
         type: AlertType.error,
@@ -95,20 +105,28 @@ class _LoginScreenState extends State<LoginScreen> {
 
   @override
   Widget build(BuildContext context) {
+    if (loading) {
+      return const Scaffold(
+        backgroundColor: SLATE,
+        body: Center(
+          child: CircularProgressIndicator(color: WHITE),
+        ),
+      );
+    }
     return BackgroundAndCard(
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
           const Text("EMAIL ADDRESS",
               style: TextStyle(
-                  color: WHITE, fontWeight: FontWeight.w700, fontSize: 10)),
+                  color: WHITE, fontWeight: FontWeight.w700, fontSize: 12)),
           const SizedBox(
             height: 3,
           ),
           TextField(
             controller: _emailController,
             style: const TextStyle(
-                fontSize: 10, fontWeight: FontWeight.w700, height: 2.0),
+                fontSize: 14, fontWeight: FontWeight.w700, height: 2.0),
             decoration: const InputDecoration(
               fillColor: TEXTFIELD,
               filled: true,
@@ -123,7 +141,7 @@ class _LoginScreenState extends State<LoginScreen> {
           ),
           const Text("PASSWORD",
               style: TextStyle(
-                  color: WHITE, fontWeight: FontWeight.w700, fontSize: 10)),
+                  color: WHITE, fontWeight: FontWeight.w700, fontSize: 12)),
           const SizedBox(
             height: 3,
           ),
@@ -131,7 +149,7 @@ class _LoginScreenState extends State<LoginScreen> {
             controller: _passwordController,
             obscureText: _obscurePassword,
             style: const TextStyle(
-                fontSize: 10, fontWeight: FontWeight.w700, height: 2.0),
+                fontSize: 12, fontWeight: FontWeight.w700, height: 2.0),
             decoration: InputDecoration(
               border: const OutlineInputBorder(
                 borderRadius: BorderRadius.all(Radius.circular(7)),
@@ -160,7 +178,7 @@ class _LoginScreenState extends State<LoginScreen> {
             child: const Text(
               "FORGET PASSWORD ?",
               style: TextStyle(
-                  color: WHITE, fontWeight: FontWeight.w700, fontSize: 10),
+                  color: WHITE, fontWeight: FontWeight.w700, fontSize: 12),
             ),
           ),
           const SizedBox(

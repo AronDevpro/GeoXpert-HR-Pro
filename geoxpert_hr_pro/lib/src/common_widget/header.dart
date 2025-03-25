@@ -340,15 +340,15 @@ class _HeaderState extends State<Header> {
                   });
 
                   if (route == '/home') {
-                    AutoRouter.of(context).replace(const HomeRoute());
+                    AutoRouter.of(context).push(const HomeRoute());
                     // } else if (route == '/attendance') {
                     // AutoRouter.of(context).replace(AttendanceRoute());
                   } else if (route == '/salary') {
-                    AutoRouter.of(context).replace(const SalaryRoute());
+                    AutoRouter.of(context).push(const SalaryRoute());
                   } else if (route == '/leave') {
-                    AutoRouter.of(context).replace(const LeaveRoute());
+                    AutoRouter.of(context).push(const LeaveRoute());
                   } else if (route == '/help') {
-                    AutoRouter.of(context).replace(HelpRoute());
+                    AutoRouter.of(context).push(HelpRoute());
                   }
                 }
               : null,
